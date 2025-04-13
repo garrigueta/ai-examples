@@ -1,5 +1,5 @@
 import os
-import pytest
+import sys
 from unittest.mock import patch, MagicMock, mock_open
 from langchain.schema import Document
 from lib.chat.history_ollama import (

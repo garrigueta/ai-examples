@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, MagicMock, mock_open, call
 import os
 from lib.storage.docs import load_documents_from_directory, generate_retriever, CHAT_HISTORY

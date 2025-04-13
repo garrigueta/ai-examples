@@ -1,6 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock, call
-import pytest
+from unittest.mock import patch, MagicMock
 
 from lib.sim import FlightSimAi
 
