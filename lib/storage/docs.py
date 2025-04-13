@@ -1,5 +1,5 @@
 import os
-from langchain.document_loaders import TextLoader
+from langchain_community.document_loaders import TextLoader
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains import (
     create_history_aware_retriever,
@@ -18,7 +18,6 @@ def load_documents_from_directory(directory_path):
     """ Load all documents from a specified directory. """
     documents = []
     for filename in os.listdir(directory_path):
-        # if filename.endswith(".txt"):  # Adjust to include other formats if needed
         file_path = os.path.join(directory_path, filename)
         loader = TextLoader(file_path)
         documents.extend(loader.load())
@@ -35,11 +34,6 @@ def generate_retriever(
     # Step 2: Create Embeddings and Vector Store
     embedding_model = HuggingFaceEmbeddings(model_name=model)
     vector_store = FAISS.from_documents(documents, embedding_model)
-
-    # # Add other content in the vector store if needed
-    # other_documents = load_documents_from_directory("other_docs")
-    # other_vector_store = FAISS.from_documents(other_documents, embedding_model)
-    # vector_store.merge_from(other_vector_store)
 
     # Step 3: Define Retriever
     retriever = vector_store.as_retriever(search_kwargs={"k": 3})

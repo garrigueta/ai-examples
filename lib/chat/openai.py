@@ -17,7 +17,6 @@ from lib.modules.speech import SpeechToText
 def load_documents_from_directory(directory_path):
     documents = []
     for filename in os.listdir(directory_path):
-        # if filename.endswith(".txt"):  # Adjust to include other formats if needed
         file_path = os.path.join(directory_path, filename)
         loader = TextLoader(file_path)
         documents.extend(loader.load())
@@ -85,6 +84,5 @@ query = "What is discussed in the documents?"
 response = rag_chain.invoke({"input": query, "chat_history": chat_history})
 
 speech = SpeechToText()
-speech.change_voice('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_EN-US_ZIRA_11.0')
 speech.speech(response['answer'])
 print(response['answer'])

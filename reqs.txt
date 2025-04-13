@@ -12,3 +12,4 @@ faiss-cpu
 ollama
 langchain-ollama
 EbookLib
+fastapi

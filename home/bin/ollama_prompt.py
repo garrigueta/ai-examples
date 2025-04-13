@@ -3,9 +3,12 @@ import os
 import importlib.util
 import sys
 
-spec = importlib.util.spec_from_file_location(
-    "module.name",
-    os.path.expanduser("~/git/flightGPT/lib/mcp/actions.py"))
+# Use a relative path to the current repository instead of hardcoded path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+repo_root = os.path.abspath(os.path.join(script_dir, "../.."))
+actions_path = os.path.join(repo_root, "lib/mcp/actions.py")
+
+spec = importlib.util.spec_from_file_location("module.name", actions_path)
 actions = importlib.util.module_from_spec(spec)
 sys.modules["module.name"] = actions
 spec.loader.exec_module(actions)
@@ -18,7 +21,7 @@ if __name__ == "__main__":
 
     op = sys.argv[1]
     if op not in ["run", "prompt", "error"]:
-        print("Invalid operation. Use 'run' or 'prompt'.")
+        print("Invalid operation. Use 'run', 'prompt', or 'error'.")
         sys.exit(1)
     if op == "run":
         prompt = " ".join(sys.argv[2:])

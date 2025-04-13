@@ -11,14 +11,12 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_huggingface import HuggingFaceEmbeddings
 
-# from lib.modules.speech import SpeechToText
-
 
 # Step 1: Load All Documents from a Directory
 def load_documents_from_directory(directory_path):
     documents = []
     for filename in os.listdir(directory_path):
-        if filename.endswith(".epub"):  # Adjust to include other formats if needed
+        if filename.endswith(".epub"):
             file_path = os.path.join(directory_path, filename)
             # Load EPUB file
             book = epub.read_epub(file_path)
@@ -31,44 +29,22 @@ def load_documents_from_directory(directory_path):
     return documents
 
 
-directory_path = os.path.expanduser("~/Documents/ebooks")  # Replace with your directory path
+directory_path = os.path.expanduser("~/Documents/ebooks")
 documents = load_documents_from_directory(directory_path)
 
-# Debug: Verify loaded documents
-for doc in documents:
-    print(f"Document: {doc.metadata['source']}")
-    print(f"Content: {doc.page_content[:500]}")  # Print the first 500 characters
-
-# Step 2: Create Embeddings and Vector Store
+# Create Embeddings and Vector Store
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 vector_store = FAISS.from_documents(documents, embedding_model)
 
-# Debug: Verify embeddings
-for doc in documents:
-    embedding = embedding_model.embed_query(doc.page_content[:500])  # Use a preview of the content
-    print(f"Generated embedding for document: {doc.metadata['source']}")
+# Define Retriever
+retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 
-# Debug: Verify vector store
-print(f"Number of documents in vector store: {len(vector_store.docstore._dict)}")
-for doc_id, doc in vector_store.docstore._dict.items():
-    print(f"Document ID: {doc_id}")
-    print(f"Document Content: {doc.page_content[:500]}")  # Print the first 500 characters
-
-# Step 3: Define Retriever
-retriever = vector_store.as_retriever(search_kwargs={"k": 3})  # Adjust k as needed
-
-# Debug: Retrieve and verify documents
-retrieved_docs = retriever.get_relevant_documents("What is the main topic of the documents?")
-for doc in retrieved_docs:
-    print(f"Retrieved document: {doc.metadata['source']}")
-    print(f"Content: {doc.page_content[:500]}")  # Print the first 500 characters
-
-# Step 4: Configure History-Aware Retriever
+# Configure History-Aware Retriever
 # Load the LLM model from local Ollama instance
 llm = ChatOllama(
-    model="gemma3",  # Local model name
+    model="gemma3",
     temperature=0,
-    base_url="http://localhost:11434",  # Ensure this matches your Ollama server URL
+    base_url="http://localhost:11434",
 )
 contextualize_q_system_prompt = (
     "Given a chat history and the latest user question "
@@ -89,7 +65,7 @@ history_aware_retriever = create_history_aware_retriever(
 )
 
 
-# Step 5: Define Question Answering Chain
+# Define Question Answering Chain
 qa_system_prompt = (
     "You are an assistant for question-answering tasks. Use "
     "the following pieces of retrieved context to answer the "
@@ -104,26 +80,19 @@ qa_prompt = ChatPromptTemplate.from_messages(
 )
 question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 
-# Step 6: Create Retrieval Chain
+# Create Retrieval Chain
 rag_chain = create_retrieval_chain(
     history_aware_retriever, question_answer_chain
 )
 
-# Debug: Test retrieval chain
-test_query = "What is the main topic of the documents?"
-test_response = rag_chain.invoke({"input": test_query, "chat_history": []})
-print(f"Test response: {test_response}")
-
-# Step 7: Query the Chain
-chat_history = []  # Initialize chat history
+# Query the Chain
+chat_history = []
 query = "What is discussed in the documents?"
 response = rag_chain.invoke({"input": query, "chat_history": chat_history})
 
-#speech = SpeechToText()
-# speech.change_voice('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_EN-US_ZIRA_11.0')
-#speech.speech(response['answer'])
 print(response['answer'])
 
+# Test direct LLM query
 response = llm(messages=[
     {"role": "user", "content": "Hello, how are you?"}
 ])
