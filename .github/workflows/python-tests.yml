@@ -1,0 +1,49 @@
+name: Python Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y portaudio19-dev python3-dev
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov
+        if [ -f reqs.txt ]; then pip install -r reqs.txt; fi
+    
+    - name: Create vosk model directory
+      run: |
+        mkdir -p vosk
+        echo "Mock directory for vosk models" > vosk/README.md
+    
+    - name: Run tests
+      run: |
+        pytest tests/ -v
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_ORG: ${{ secrets.OPENAI_ORG }}
+        OPENAI_PROJ: ${{ secrets.OPENAI_PROJ }}
+        OLLAMA_API_URL: http://localhost:11434/api/generate
+        OLLAMA_MODEL: mock-model
+        PYTHONPATH: ${{ github.workspace }}
