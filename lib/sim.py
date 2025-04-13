@@ -30,13 +30,14 @@ class FlightSimAi:
         while True:
             self.audio.wait_for_audio()
             if self.audio.recognized_text != "":
+                # Check for termination keyword first
+                if "finalizar" in self.audio.recognized_text.lower():
+                    print("Termination keyword detected. Stopping...", flush=True)
+                    break
+                
                 # Set the system content to the current flight data
                 #n self.ai.set_system_content(self.msfs.get_flight_data())
                 # Get the AI response
                 response = self.ai.get_ai_response(self.audio.recognized_text)
                 # Speak the response
                 self.speech.speech(response)
-
-            if "finalizar" in self.audio.recognized_text.lower():
-                print("Termination keyword detected. Stopping...", flush=True)
-                break
