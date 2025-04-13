@@ -1,5 +1,6 @@
 """ A Python script to interact with MSFS and OpenAI GPT """
 # Custom Libraries
+from lib.modules.msfs import MSFSWrapper
 from lib.modules.speech import SpeechToText
 from lib.modules.audio import Audio
 from lib.modules.ai import AiWrapper
@@ -12,6 +13,7 @@ class FlightSimAi:
         self.ai = AiWrapper()
         self.audio = Audio()
         self.speech = SpeechToText()
+        self.msfs = MSFSWrapper()
 
         self.start()
 
@@ -21,6 +23,8 @@ class FlightSimAi:
         self.ai.initi_ai()
         # Initialize the audio
         self.audio.init_audio()
+        # Initialize the MSFS connection
+        self.msfs.start_data_loop(interval=2)
 
         print("Listening...", flush=True)
         while True:
@@ -30,7 +34,8 @@ class FlightSimAi:
                 if "finalizar" in self.audio.recognized_text.lower():
                     print("Termination keyword detected. Stopping...", flush=True)
                     break
-                
+                # Send the flight data as context to the AI
+                self.ai.set_system_content(self.msfs.get_flight_data())
                 # Get the AI response
                 response = self.ai.get_ai_response(self.audio.recognized_text)
                 # Speak the response

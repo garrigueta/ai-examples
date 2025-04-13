@@ -69,13 +69,25 @@ Core dependencies:
    export OPENAI_PROJ=your_project_id
    ```
 
-5. For local LLM examples, ensure Ollama is installed and running
+5. For local LLM examples, install and set up Ollama:
+   ```bash
+   # For Linux
+   curl -fsSL https://ollama.com/install.sh | sh
+   
+   # Start Ollama service
+   ollama serve
+   
+   # In a new terminal, pull a model (e.g., gemma3, llama3, mistral)
+   ollama pull gemma3
+   ```
+   
+   For more details, visit the [Ollama installation guide](https://github.com/ollama/ollama#installation).
 
 ## Usage Examples
 
 ### FlightGPT (MSFS Assistant)
 ```bash
-python app.py
+python msfs_assitant.py
 ```
 
 ### Semantic Search
@@ -100,7 +112,7 @@ python home/bin/ollama_prompt.py error "pip install tensorflow" "ERROR: Could no
 
 ## Project Structure
 
-- `app.py`: FlightGPT application entry point
+- `msfs_assitant.py`: FlightGPT application entry point
 - `semantic_search.py`: Example of semantic search implementation
 - `lib/`: Core libraries and modules
   - `modules/`: Basic functionality modules

@@ -7,19 +7,22 @@ from lib.sim import FlightSimAi
 class TestFlightSimAi(unittest.TestCase):
     """Tests for the FlightSimAi class in the sim module."""
 
+    @patch('lib.sim.MSFSWrapper')
     @patch('lib.sim.AiWrapper')
     @patch('lib.sim.Audio')
     @patch('lib.sim.SpeechToText')
-    def test_initialization(self, mock_speech, mock_audio, mock_ai):
+    def test_initialization(self, mock_speech, mock_audio, mock_ai, mock_msfs):
         """Test FlightSimAi initialization with properly mocked dependencies."""
         # Setup mocks
         mock_ai_instance = MagicMock()
         mock_audio_instance = MagicMock()
         mock_speech_instance = MagicMock()
+        mock_msfs_instance = MagicMock()
 
         mock_ai.return_value = mock_ai_instance
         mock_audio.return_value = mock_audio_instance
         mock_speech.return_value = mock_speech_instance
+        mock_msfs.return_value = mock_msfs_instance
 
         # Patch the start method to prevent it from running during initialization
         with patch.object(FlightSimAi, 'start'):
@@ -29,23 +32,27 @@ class TestFlightSimAi(unittest.TestCase):
             self.assertEqual(flight_sim.ai, mock_ai_instance)
             self.assertEqual(flight_sim.audio, mock_audio_instance)
             self.assertEqual(flight_sim.speech, mock_speech_instance)
+            self.assertEqual(flight_sim.msfs, mock_msfs_instance)
 
             # Verify start was called
             FlightSimAi.start.assert_called_once()
 
+    @patch('lib.sim.MSFSWrapper')
     @patch('lib.sim.AiWrapper')
     @patch('lib.sim.Audio')
     @patch('lib.sim.SpeechToText')
-    def test_start_method_initialization(self, mock_speech, mock_speech_to_text, mock_ai):
+    def test_start_method_initialization(self, mock_speech, mock_audio, mock_ai, mock_msfs):
         """Test that start method initializes the AI and Audio subsystems."""
         # Setup mocks
         mock_ai_instance = MagicMock()
         mock_audio_instance = MagicMock()
         mock_speech_instance = MagicMock()
+        mock_msfs_instance = MagicMock()
 
         mock_ai.return_value = mock_ai_instance
-        mock_speech_to_text.return_value = mock_audio_instance
+        mock_audio.return_value = mock_audio_instance
         mock_speech.return_value = mock_speech_instance
+        mock_msfs.return_value = mock_msfs_instance
 
         # Patch the continuous loop to exit immediately
         mock_audio_instance.wait_for_audio.side_effect = [Exception("Exit test early")]
@@ -60,21 +67,26 @@ class TestFlightSimAi(unittest.TestCase):
             # Verify initialization calls
             mock_ai_instance.initi_ai.assert_called_once()
             mock_audio_instance.init_audio.assert_called_once()
+            mock_msfs_instance.start_data_loop.assert_called_once_with(interval=2)
             mock_print.assert_called_with("Listening...", flush=True)
 
+    @patch('lib.sim.MSFSWrapper')
     @patch('lib.sim.AiWrapper')
     @patch('lib.sim.Audio')
     @patch('lib.sim.SpeechToText')
-    def test_audio_processing_loop(self, mock_speech, mock_audio, mock_ai):
+    def test_audio_processing_loop(self, mock_speech, mock_audio, mock_ai, mock_msfs):
         """Test the main processing loop for audio recognition and AI response."""
         # Setup mocks
         mock_ai_instance = MagicMock()
         mock_audio_instance = MagicMock()
         mock_speech_instance = MagicMock()
+        mock_msfs_instance = MagicMock()
+        mock_msfs_instance.get_flight_data.return_value = '{"altitude": 10000}'
 
         mock_ai.return_value = mock_ai_instance
         mock_audio.return_value = mock_audio_instance
         mock_speech.return_value = mock_speech_instance
+        mock_msfs.return_value = mock_msfs_instance
 
         # Setup a sequence of recognized text values that will be processed
         # First iteration: process normal text
@@ -99,22 +111,26 @@ class TestFlightSimAi(unittest.TestCase):
 
         # Verify the interactions
         self.assertEqual(mock_audio_instance.wait_for_audio.call_count, 2)
+        mock_ai_instance.set_system_content.assert_called_once_with('{"altitude": 10000}')
         mock_ai_instance.get_ai_response.assert_called_once_with("What's my altitude?")
         mock_speech_instance.speech.assert_called_once_with("Your altitude is 10,000 feet.")
 
+    @patch('lib.sim.MSFSWrapper')
     @patch('lib.sim.AiWrapper')
     @patch('lib.sim.Audio')
     @patch('lib.sim.SpeechToText')
-    def test_empty_recognized_text(self, mock_speech, mock_audio, mock_ai):
+    def test_empty_recognized_text(self, mock_speech, mock_audio, mock_ai, mock_msfs):
         """Test that empty recognized text is properly handled."""
         # Setup mocks
         mock_ai_instance = MagicMock()
         mock_audio_instance = MagicMock()
         mock_speech_instance = MagicMock()
+        mock_msfs_instance = MagicMock()
 
         mock_ai.return_value = mock_ai_instance
         mock_audio.return_value = mock_audio_instance
         mock_speech.return_value = mock_speech_instance
+        mock_msfs.return_value = mock_msfs_instance
 
         # Setup for two iterations:
         # First with empty recognized text (should not trigger AI)
@@ -138,19 +154,22 @@ class TestFlightSimAi(unittest.TestCase):
         mock_ai_instance.get_ai_response.assert_not_called()
         mock_speech_instance.speech.assert_not_called()
 
+    @patch('lib.sim.MSFSWrapper')
     @patch('lib.sim.AiWrapper')
     @patch('lib.sim.Audio')
     @patch('lib.sim.SpeechToText')
-    def test_termination_keyword_detection(self, mock_speech, mock_audio, mock_ai):
+    def test_termination_keyword_detection(self, mock_speech, mock_audio, mock_ai, mock_msfs):
         """Test that the termination keyword is properly detected."""
         # Setup mocks
         mock_ai_instance = MagicMock()
         mock_audio_instance = MagicMock()
         mock_speech_instance = MagicMock()
+        mock_msfs_instance = MagicMock()
 
         mock_ai.return_value = mock_ai_instance
         mock_audio.return_value = mock_audio_instance
         mock_speech.return_value = mock_speech_instance
+        mock_msfs.return_value = mock_msfs_instance
 
         # Directly set recognized_text to termination keyword
         mock_audio_instance.recognized_text = "finalizar"
