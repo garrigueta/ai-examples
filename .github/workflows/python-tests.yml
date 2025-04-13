@@ -46,9 +46,3 @@ jobs:
         OLLAMA_API_URL: http://localhost:11434/api/generate
         OLLAMA_MODEL: mock-model
         PYTHONPATH: ${{ github.workspace }}
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        fail_ci_if_error: false
