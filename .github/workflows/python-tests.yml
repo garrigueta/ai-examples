@@ -36,9 +36,9 @@ jobs:
         mkdir -p vosk
         echo "Mock directory for vosk models" > vosk/README.md
     
-    - name: Run tests
+    - name: Run tests with coverage
       run: |
-        pytest tests/ -v
+        pytest --cov=lib --cov-report=xml --cov-report=term tests/ -v
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         OPENAI_ORG: ${{ secrets.OPENAI_ORG }}
@@ -46,3 +46,9 @@ jobs:
         OLLAMA_API_URL: http://localhost:11434/api/generate
         OLLAMA_MODEL: mock-model
         PYTHONPATH: ${{ github.workspace }}
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
