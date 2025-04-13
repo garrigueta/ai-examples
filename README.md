@@ -2,6 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
 ![Last Updated](https://img.shields.io/badge/last%20updated-April%202025-blue)
+[![Python Tests](https://github.com/garrigueta/ai-examples/actions/workflows/python-tests.yml/badge.svg)](https://github.com/garrigueta/ai-examples/actions/workflows/python-tests.yml)
 
 A collection of AI implementation examples and tools for various use cases, from flight simulation assistants to local LLM interactions.
 
