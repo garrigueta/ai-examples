@@ -20,6 +20,7 @@ sys.modules['SimConnect'].AircraftEvents = MagicMock
 sys.modules['pyttsx3'] = MagicMock()
 sys.modules['pyttsx3'].init = MagicMock(return_value=MagicMock())
 
+
 @pytest.fixture
 def mock_openai_client():
     """Fixture that provides a mock OpenAI client."""
@@ -30,6 +31,7 @@ def mock_openai_client():
     mock_client.chat.completions.create.return_value = mock_response
     return mock_client
 
+
 @pytest.fixture
 def mock_simconnect():
     """Fixture that provides a mock SimConnect instance."""
@@ -39,6 +41,7 @@ def mock_simconnect():
     mock_requests.get.return_value = 10000  # Default value for all data points
     mock_sim.AircraftRequests.return_value = mock_requests
     return mock_sim
+
 
 @pytest.fixture(autouse=True)
 def mock_external_services():
@@ -51,7 +54,7 @@ def mock_external_services():
         }
         mock_response.status_code = 200
         mock_post.return_value = mock_response
-        
+
         # Set environment variables for testing
         with patch.dict(os.environ, {
             'OPENAI_API_KEY': 'test-key',

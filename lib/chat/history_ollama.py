@@ -14,10 +14,10 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 def load_documents_from_directory(directory_path):
     """Load all EPUB documents from a directory.
-    
+
     Args:
         directory_path: Path to the directory containing EPUB files.
-        
+
     Returns:
         A list of Document objects containing the text from the EPUB files.
     """
@@ -38,10 +38,10 @@ def load_documents_from_directory(directory_path):
 
 def create_embedding_model(model_name="sentence-transformers/all-MiniLM-L6-v2"):
     """Create an embedding model using HuggingFaceEmbeddings.
-    
+
     Args:
         model_name: Name of the model to use for embeddings.
-        
+
     Returns:
         An instance of HuggingFaceEmbeddings.
     """
@@ -50,11 +50,11 @@ def create_embedding_model(model_name="sentence-transformers/all-MiniLM-L6-v2"):
 
 def create_vector_store(documents, embedding_model):
     """Create a FAISS vector store from documents.
-    
+
     Args:
         documents: List of Document objects.
         embedding_model: Model to use for embeddings.
-        
+
     Returns:
         A FAISS vector store instance.
     """
@@ -63,11 +63,11 @@ def create_vector_store(documents, embedding_model):
 
 def create_retriever(vector_store, k=3):
     """Create a retriever from a vector store.
-    
+
     Args:
         vector_store: Vector store to use for retrieval.
         k: Number of documents to retrieve.
-        
+
     Returns:
         A retriever instance.
     """
@@ -76,12 +76,12 @@ def create_retriever(vector_store, k=3):
 
 def create_llm(model="gemma3", temperature=0, base_url="http://localhost:11434"):
     """Create an Ollama LLM instance.
-    
+
     Args:
         model: Name of the model to use.
         temperature: Temperature parameter for generation.
         base_url: URL of the Ollama server.
-        
+
     Returns:
         A ChatOllama instance.
     """
@@ -94,11 +94,11 @@ def create_llm(model="gemma3", temperature=0, base_url="http://localhost:11434")
 
 def create_history_aware_retriever_chain(llm, retriever):
     """Create a history-aware retriever.
-    
+
     Args:
         llm: Language model to use.
         retriever: Retriever to use.
-        
+
     Returns:
         A history-aware retriever instance.
     """
@@ -123,10 +123,10 @@ def create_history_aware_retriever_chain(llm, retriever):
 
 def create_qa_chain(llm):
     """Create a question-answering chain.
-    
+
     Args:
         llm: Language model to use.
-        
+
     Returns:
         A question-answering chain.
     """
@@ -147,11 +147,11 @@ def create_qa_chain(llm):
 
 def create_rag_chain(history_aware_retriever, qa_chain):
     """Create a RAG chain.
-    
+
     Args:
         history_aware_retriever: History-aware retriever to use.
         qa_chain: Question-answering chain to use.
-        
+
     Returns:
         A RAG chain.
     """
@@ -162,12 +162,12 @@ def create_rag_chain(history_aware_retriever, qa_chain):
 
 def query_rag_chain(rag_chain, query, chat_history=None):
     """Query a RAG chain.
-    
+
     Args:
         rag_chain: RAG chain to query.
         query: Query to use.
         chat_history: Chat history to use.
-        
+
     Returns:
         The response from the RAG chain.
     """
@@ -178,53 +178,53 @@ def query_rag_chain(rag_chain, query, chat_history=None):
 
 def setup_rag_system(directory_path=None):
     """Set up a complete RAG system.
-    
+
     Args:
         directory_path: Path to the directory containing documents.
-        
+
     Returns:
         A tuple of (rag_chain, chat_history).
     """
     if directory_path is None:
         directory_path = os.path.expanduser("~/Documents/ebooks")
-    
+
     # Load documents
     documents = load_documents_from_directory(directory_path)
-    
+
     # Create embeddings and vector store
     embedding_model = create_embedding_model()
     vector_store = create_vector_store(documents, embedding_model)
-    
+
     # Create retriever
     retriever = create_retriever(vector_store)
-    
+
     # Create LLM
     llm = create_llm()
-    
+
     # Create history-aware retriever
     history_aware_retriever = create_history_aware_retriever_chain(llm, retriever)
-    
+
     # Create QA chain
     qa_chain = create_qa_chain(llm)
-    
+
     # Create RAG chain
     rag_chain = create_rag_chain(history_aware_retriever, qa_chain)
-    
+
     # Initialize chat history
     chat_history = []
-    
+
     return rag_chain, chat_history
 
 
 # Only execute this code when the module is run directly, not when imported
 if __name__ == "__main__":
     rag_chain, chat_history = setup_rag_system()
-    
+
     # Query the Chain
     query = "What is discussed in the documents?"
     response = query_rag_chain(rag_chain, query, chat_history)
     print(response['answer'])
-    
+
     # Test direct LLM query
     llm = create_llm()
     response = llm(messages=[

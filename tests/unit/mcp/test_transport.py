@@ -158,10 +158,10 @@ class TestMCPMessage:
         assert msg.role == "system"
         assert msg.content == "Minimal message"
         assert msg.context == {}  # Should default to empty dict
-        
+
     def test_invalid_json_raises_exception(self):
         """Test that invalid JSON raises an exception."""
         invalid_json = "{ this is not valid JSON }"
-        
+
         with pytest.raises(json.JSONDecodeError):
             MCPMessage.from_json(invalid_json)
