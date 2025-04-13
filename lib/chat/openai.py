@@ -23,66 +23,111 @@ def load_documents_from_directory(directory_path):
     return documents
 
 
-directory_path = "docs"  # Replace with your directory path
-documents = load_documents_from_directory(directory_path)
+def create_embedding_model(model_name="sentence-transformers/all-MiniLM-L6-v2"):
+    """Create an embedding model using HuggingFace."""
+    return HuggingFaceEmbeddings(model_name=model_name)
 
-# Step 2: Create Embeddings and Vector Store
-embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-vector_store = FAISS.from_documents(documents, embedding_model)
 
-# Step 3: Define Retriever
-retriever = vector_store.as_retriever(search_kwargs={"k": 3})  # Adjust k as needed
+def create_vector_store(documents, embedding_model):
+    """Create a vector store from documents and an embedding model."""
+    return FAISS.from_documents(documents, embedding_model)
 
-# Step 4: Configure History-Aware Retriever
-llm = ChatOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            )
-contextualize_q_system_prompt = (
-    "Given a chat history and the latest user question "
-    "which might reference context in the chat history, "
-    "formulate a standalone question which can be understood "
-    "without the chat history. Do NOT answer the question, just "
-    "reformulate it if needed and otherwise return it as is."
-)
-contextualize_q_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", contextualize_q_system_prompt),
-        MessagesPlaceholder("chat_history"),
-        ("human", "{input}"),
-    ]
-)
-history_aware_retriever = create_history_aware_retriever(
-    llm, retriever, contextualize_q_prompt
-)
 
-# Step 5: Define Question Answering Chain
-qa_system_prompt = (
-    "You are an assistant for question-answering tasks. Use "
-    "the following pieces of retrieved context to answer the "
-    "question. If you don't know the answer, just say that you "
-    "don't know. Use three sentences maximum and keep the answer "
-    "concise.\n\n"
-    "{context}"
-)
-qa_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", qa_system_prompt),
-        MessagesPlaceholder("chat_history"),
-        ("human", "{input}"),
-    ]
-)
-question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+def create_retriever(vector_store, k=3):
+    """Create a retriever from a vector store."""
+    return vector_store.as_retriever(search_kwargs={"k": k})
 
-# Step 6: Create Retrieval Chain
-rag_chain = create_retrieval_chain(
-    history_aware_retriever, question_answer_chain
-)
 
-# Step 7: Query the Chain
-chat_history = []  # Initialize chat history
-query = "What is discussed in the documents?"
-response = rag_chain.invoke({"input": query, "chat_history": chat_history})
+def create_llm(api_key=None):
+    """Create an OpenAI language model."""
+    if api_key is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+    return ChatOpenAI(api_key=api_key)
 
-speech = SpeechToText()
-speech.speech(response['answer'])
-print(response['answer'])
+
+def create_history_aware_retriever_chain(llm, retriever):
+    """Create a history-aware retriever chain."""
+    contextualize_q_system_prompt = (
+        "Given a chat history and the latest user question "
+        "which might reference context in the chat history, "
+        "formulate a standalone question which can be understood "
+        "without the chat history. Do NOT answer the question, just "
+        "reformulate it if needed and otherwise return it as is."
+    )
+    contextualize_q_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", contextualize_q_system_prompt),
+            MessagesPlaceholder("chat_history"),
+            ("human", "{input}"),
+        ]
+    )
+    return create_history_aware_retriever(llm, retriever, contextualize_q_prompt)
+
+
+def create_qa_chain(llm):
+    """Create a question answering chain."""
+    qa_system_prompt = (
+        "You are an assistant for question-answering tasks. Use "
+        "the following pieces of retrieved context to answer the "
+        "question. If you don't know the answer, just say that you "
+        "don't know. Use three sentences maximum and keep the answer "
+        "concise.\n\n"
+        "{context}"
+    )
+    qa_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", qa_system_prompt),
+            MessagesPlaceholder("chat_history"),
+            ("human", "{input}"),
+        ]
+    )
+    return create_stuff_documents_chain(llm, qa_prompt)
+
+
+def create_rag_chain(history_aware_retriever, question_answer_chain):
+    """Create a retrieval augmented generation chain."""
+    return create_retrieval_chain(history_aware_retriever, question_answer_chain)
+
+
+def query_rag_chain(rag_chain, query, chat_history=None):
+    """Query the RAG chain with a query and optional chat history."""
+    if chat_history is None:
+        chat_history = []
+    return rag_chain.invoke({"input": query, "chat_history": chat_history})
+
+
+def setup_rag_system(directory_path="docs"):
+    """Set up the complete RAG system."""
+    # Load documents
+    documents = load_documents_from_directory(directory_path)
+    
+    # Create embeddings and vector store
+    embedding_model = create_embedding_model()
+    vector_store = create_vector_store(documents, embedding_model)
+    
+    # Create retriever
+    retriever = create_retriever(vector_store)
+    
+    # Create LLM
+    llm = create_llm()
+    
+    # Create chains
+    history_aware_retriever = create_history_aware_retriever_chain(llm, retriever)
+    question_answer_chain = create_qa_chain(llm)
+    rag_chain = create_rag_chain(history_aware_retriever, question_answer_chain)
+    
+    # Initialize chat history
+    chat_history = []
+    
+    return rag_chain, chat_history
+
+
+# Only execute if script is run directly, not when imported
+if __name__ == "__main__":
+    rag_chain, chat_history = setup_rag_system()
+    query = "What is discussed in the documents?"
+    response = query_rag_chain(rag_chain, query, chat_history)
+    
+    speech = SpeechToText()
+    speech.speech(response['answer'])
+    print(response['answer'])

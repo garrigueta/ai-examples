@@ -1,0 +1,10 @@
+# CODEOWNERS file for ai-examples project
+#
+# This file defines who is responsible for different parts of the codebase
+# Format is: path/to/file_or_dir    @username or team name
+#
+# For more details on CODEOWNERS files, see:
+# https://docs.github.com/en/repositories/managing-your-repository-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+*                                  @garrigueta
